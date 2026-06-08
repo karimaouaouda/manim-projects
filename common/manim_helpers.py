@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import os
 from functools import lru_cache
 from typing import Iterable
 
@@ -46,17 +47,23 @@ def pick_font(candidates: Iterable[str], fallback: str = "Arial") -> str:
 
 
 ARABIC_FONT = pick_font(
-    ("Noto Kufi Arabic", "Noto Naskh Arabic", "Cairo", "Amiri", "Arial"),
+    ("Cairo", "Noto Kufi Arabic", "Noto Naskh Arabic", "Arial"),
 )
 LATIN_FONT = pick_font(("Montserrat", "Inter", "Poppins", "Arial", "DejaVu Sans"))
 
 
 def ar(text: str) -> str:
-    """Shape Arabic text for Manim while keeping a safe fallback."""
+    """Return Arabic text in the form Manim/Pango expects.
 
-    if arabic_reshaper is None or get_display is None:
-        return text
-    return get_display(arabic_reshaper.reshape(text))
+    Manim CE renders Text through Pango, which already handles Arabic joining
+    and RTL layout when it receives logical Unicode text. A reshaper fallback is
+    left as an opt-in for unusual render stacks that need pre-shaped text.
+    """
+
+    if os.environ.get("MANIM_USE_ARABIC_RESHAPER") == "1":
+        if arabic_reshaper is not None and get_display is not None:
+            return get_display(arabic_reshaper.reshape(text))
+    return text
 
 
 def fit_to_frame(
