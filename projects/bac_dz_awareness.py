@@ -46,6 +46,7 @@ from common import (
     fit_to_frame,
     make_ar_text,
     make_latin_text,
+    play_namat_closing,
 )
 
 
@@ -69,6 +70,7 @@ class BACDzAwarenessVideo(MovingCameraScene):
         self.scene_5_comparison()
         self.scene_6_solution()
         self.scene_7_final_message()
+        play_namat_closing(self, clear_existing=False, seed=24)
 
 
     def register_fonts(self, fonts_dir: Path) -> None:
@@ -154,7 +156,7 @@ class BACDzAwarenessVideo(MovingCameraScene):
 
     def scene_1_hook(self) -> None:
         # The opening is intentionally sparse: one word, one pulse, one short idea.
-        self.wait(0.3)
+        self.wait(0.2)
         self.hook_pulse = create_glow_circle(radius=1.35, color=CALM)
         self.hook_pulse.set_z_index(-2)
         self.bac_word = make_latin_text("BAC", font_size=132, color=WHITE, weight="BOLD")
@@ -169,12 +171,12 @@ class BACDzAwarenessVideo(MovingCameraScene):
         self.play(
             self.camera.frame.animate.scale(0.93),
             self.hook_pulse.animate.scale(1.08),
-            run_time=1.75,
+            run_time=1.15,
             rate_func=smooth,
         )
         self.play(FadeIn(self.hook_subtitle, shift=UP * 0.14), run_time=0.75)
-        self.play(Indicate(self.bac_word, color=CALM, scale_factor=1.035), run_time=0.9)
-        self.wait(1.3)
+        self.play(Indicate(self.bac_word, color=CALM, scale_factor=1.035), run_time=0.7)
+        self.wait(1.0)
 
     def scene_2_pressure(self) -> None:
         # Social phrases close in around the anchor word without overcrowding.
@@ -251,8 +253,8 @@ class BACDzAwarenessVideo(MovingCameraScene):
             mark_text = make_latin_text(mark, font_size=34, color=YELLOW, weight="BOLD")
             mark_text.move_to(paper.get_center() + position)
             marks.add(mark_text)
-            self.play(FadeIn(mark_text, scale=0.85), run_time=0.42)
-            self.play(Indicate(mark_text, color=PRESSURE, scale_factor=1.06), run_time=0.45)
+            self.play(FadeIn(mark_text, scale=0.85), run_time=0.32)
+            self.play(Indicate(mark_text, color=PRESSURE, scale_factor=1.06), run_time=0.35)
 
         exam_group = VGroup(paper, marks)
         self.play(
@@ -392,6 +394,7 @@ class BACDzAwarenessVideo(MovingCameraScene):
             weight = self.comparison_weight()
             weight.move_to(student.get_center() + DOWN * (1.05 + index * 0.13) + LEFT * (0.24 - index * 0.11))
             move_old_weights = [weight_mob.animate.shift(RIGHT * step * 0.45 + DOWN * 0.03) for weight_mob in weights]
+            self.wait(1.0)
             self.play(
                 Transform(bubble, weight),
                 student.animate.shift(RIGHT * step).scale(0.985),
@@ -463,6 +466,8 @@ class BACDzAwarenessVideo(MovingCameraScene):
             )
             self.play(Indicate(card[1], color=SUCCESS, scale_factor=1.2), run_time=0.36)
             active_cards.append(card)
+
+        self.wait(1.1)
 
         self.play(
             *[old.animate.set_opacity(0.62) for old in active_cards],

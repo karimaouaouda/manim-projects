@@ -19,6 +19,21 @@ from .manim_helpers import (
     make_latin_text,
     pick_font,
 )
+from .namat_closing import (
+    BRAND_NAME,
+    CTA,
+    SCENE_DURATION_TARGET,
+    SLOGAN,
+    NamatClosingBuilder,
+    play_namat_closing,
+)
+from .namat_opening import (
+    OPENING_SCENE_DURATION_TARGET,
+    OPENING_SECONDARY_TAGLINE,
+    OPENING_TAGLINE,
+    NamatOpeningBuilder,
+    play_namat_opening,
+)
 
 __all__ = [
     "ARABIC_FONT",
@@ -40,4 +55,15 @@ __all__ = [
     "make_ar_text",
     "make_latin_text",
     "pick_font",
+    "BRAND_NAME",
+    "CTA",
+    "SCENE_DURATION_TARGET",
+    "SLOGAN",
+    "NamatClosingBuilder",
+    "play_namat_closing",
+    "OPENING_SCENE_DURATION_TARGET",
+    "OPENING_SECONDARY_TAGLINE",
+    "OPENING_TAGLINE",
+    "NamatOpeningBuilder",
+    "play_namat_opening",
 ]
