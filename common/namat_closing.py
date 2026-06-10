@@ -33,6 +33,7 @@ class ClosingLayout:
     emblem_center: np.ndarray
     brand_y: float
     cta_y: float
+    is_vertical: bool
 
 
 class NamatClosingBuilder:
@@ -46,12 +47,21 @@ class NamatClosingBuilder:
     def _layout(self) -> ClosingLayout:
         frame_width = float(config.frame_width)
         frame_height = float(config.frame_height)
-        base_scale = min(frame_width / 14.222, frame_height / 8.0)
-        scale = float(np.clip(base_scale, 0.58, 1.18))
         is_vertical = frame_height > frame_width * 1.22
-        center_y = frame_height * (0.16 if is_vertical else 0.12)
-        brand_y = center_y - (1.72 if is_vertical else 1.55) * scale
-        cta_y = -frame_height * (0.35 if is_vertical else 0.38)
+
+        if is_vertical:
+            base_scale = min(frame_width / 9.0, frame_height / 16.0)
+            scale = float(np.clip(base_scale, 0.82, 1.08))
+            center_y = frame_height * 0.19
+            brand_y = center_y - 2.12 * scale
+            cta_y = -frame_height * 0.34
+        else:
+            base_scale = min(frame_width / 14.222, frame_height / 8.0)
+            scale = float(np.clip(base_scale, 0.58, 1.18))
+            center_y = frame_height * 0.12
+            brand_y = center_y - 1.55 * scale
+            cta_y = -frame_height * 0.38
+
         return ClosingLayout(
             width=frame_width,
             height=frame_height,
@@ -59,6 +69,7 @@ class NamatClosingBuilder:
             emblem_center=np.array([0.0, center_y, 0.0]),
             brand_y=brand_y,
             cta_y=cta_y,
+            is_vertical=is_vertical,
         )
 
     def create_background(self) -> VGroup:
@@ -109,14 +120,26 @@ class NamatClosingBuilder:
         return VGroup(bg, vignette, grid, particles).set_z_index(-10)
 
     def create_social_network(self) -> tuple[VGroup, VGroup, VGroup]:
-        centers = np.array(
-            [
+        if self.layout.is_vertical:
+            base_centers = [
+                [-1.70, 1.00, 0.0],
+                [-0.22, -0.25, 0.0],
+                [1.20, 0.78, 0.0],
+                [1.45, -0.72, 0.0],
+            ]
+            spread_x = 0.42
+            spread_y = 0.36
+        else:
+            base_centers = [
                 [-2.6, 0.85, 0.0],
                 [-0.35, -0.28, 0.0],
                 [1.75, 0.68, 0.0],
                 [2.25, -0.72, 0.0],
-            ],
-        ) * self.layout.scale
+            ]
+            spread_x = 0.54
+            spread_y = 0.38
+
+        centers = np.array(base_centers) * self.layout.scale
         centers += self.layout.emblem_center
 
         points: list[np.ndarray] = []
@@ -124,8 +147,8 @@ class NamatClosingBuilder:
             cluster = centers[index % len(centers)]
             spread = np.array(
                 [
-                    self.rng.normal(0, 0.54 * self.layout.scale),
-                    self.rng.normal(0, 0.38 * self.layout.scale),
+                    self.rng.normal(0, spread_x * self.layout.scale),
+                    self.rng.normal(0, spread_y * self.layout.scale),
                     0.0,
                 ],
             )
@@ -183,6 +206,7 @@ class NamatClosingBuilder:
         radius = 0.92 * max(self.layout.scale, 0.72)
         ring = Circle(radius=radius)
         ring.set_stroke(ACCENT, width=2.2, opacity=0.82)
+        ring.move_to(center)
 
         angles = [110, 58, 8, -38, -92, -150]
         nodes = VGroup()
@@ -206,34 +230,38 @@ class NamatClosingBuilder:
         nucleus.set_fill(WARM, opacity=1)
         halo = Circle(radius=radius * 1.22)
         halo.set_stroke(SECONDARY, width=1.0, opacity=0.18)
+        halo.move_to(center)
         emblem = VGroup(halo, ring, connectors, nodes, nucleus)
-        emblem.move_to(center)
         return emblem
 
     def create_brand_texts(self) -> tuple[VGroup, Text, Text, Line]:
         text_scale = max(self.layout.scale, 0.78)
+        brand_max_width = self.layout.width * (0.82 if self.layout.is_vertical else 0.72)
+        slogan_max_width = self.layout.width * (0.84 if self.layout.is_vertical else 0.76)
+        cta_max_width = self.layout.width * (0.72 if self.layout.is_vertical else 0.64)
+
         brand = make_ar_text(
             f"\u200e{BRAND_NAME}\u200e",
-            font_size=50 * text_scale,
+            font_size=(48 if self.layout.is_vertical else 50) * text_scale,
             color=PRIMARY,
             weight="BOLD",
-            max_width=self.layout.width * 0.72,
+            max_width=brand_max_width,
         )
         brand.move_to([0, self.layout.brand_y, 0])
 
         slogan = make_ar_text(
             SLOGAN,
-            font_size=29 * text_scale,
+            font_size=(27 if self.layout.is_vertical else 29) * text_scale,
             color=PRIMARY,
-            max_width=self.layout.width * 0.76,
+            max_width=slogan_max_width,
         )
-        slogan.next_to(brand, DOWN, buff=0.24 * text_scale)
+        slogan.next_to(brand, DOWN, buff=(0.22 if self.layout.is_vertical else 0.24) * text_scale)
 
         cta = make_ar_text(
             CTA,
-            font_size=20 * text_scale,
+            font_size=(19 if self.layout.is_vertical else 20) * text_scale,
             color=SECONDARY,
-            max_width=self.layout.width * 0.64,
+            max_width=cta_max_width,
         )
         cta.move_to([0, self.layout.cta_y, 0])
         cta.set_opacity(0.78)
@@ -261,7 +289,8 @@ class NamatClosingBuilder:
         dots, lines, path_lines = self.create_social_network()
         network = VGroup(lines, path_lines, dots)
         lens = self.create_lens()
-        lens.move_to(self.layout.emblem_center + LEFT * self.layout.width * 0.26)
+        lens_sweep = self.layout.width * (0.21 if self.layout.is_vertical else 0.26)
+        lens.move_to(self.layout.emblem_center + LEFT * lens_sweep)
 
         # Optional SFX: soft digital pulse here.
         self.scene.play(
@@ -283,7 +312,7 @@ class NamatClosingBuilder:
         # Optional SFX: subtle lens sweep whoosh here.
         self.scene.play(FadeIn(lens, scale=0.85), run_time=0.2)
         self.scene.play(
-            lens.animate.move_to(self.layout.emblem_center + RIGHT * self.layout.width * 0.26),
+            lens.animate.move_to(self.layout.emblem_center + RIGHT * lens_sweep),
             lines.animate.set_opacity(0.08),
             path_lines.animate.set_stroke(SECONDARY, width=3.0 * self.layout.scale, opacity=0.9),
             run_time=1.1,
