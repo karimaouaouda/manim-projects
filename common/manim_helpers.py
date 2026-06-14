@@ -60,7 +60,7 @@ def pick_font(candidates: Iterable[str], fallback: str = "Arial") -> str:
 
 
 ARABIC_FONT = pick_font(
-    ("Noto Kufi Arabic", "Noto Naskh Arabic", "Amiri", "Arial", "DejaVu Sans"),
+    ( "Noto Naskh Arabic", "Cairo", "Arial", "Noto Kufi Arabic", "Amiri", "Arial", "DejaVu Sans"),
 )
 LATIN_FONT = pick_font(("Montserrat", "Inter", "Poppins", "Arial", "DejaVu Sans"))
 
@@ -68,14 +68,23 @@ LATIN_FONT = pick_font(("Montserrat", "Inter", "Poppins", "Arial", "DejaVu Sans"
 def ar(text: str) -> str:
     """Return Arabic text in the form Manim/Pango expects.
 
-    Manim CE renders Text through Pango, which already handles Arabic joining
-    and RTL layout when it receives logical Unicode text. A reshaper fallback is
-    left as an opt-in for unusual render stacks that need pre-shaped text.
+    Manim CE renders Text through Pango, which already handles RTL ordering in
+    this project but may leave Arabic letters separated on Windows. Shape the
+    glyphs by default, and only apply bidi visual ordering when explicitly asked.
+    Set MANIM_USE_ARABIC_RESHAPER=0 to force raw logical Unicode text.
     """
 
-    if os.environ.get("MANIM_USE_ARABIC_RESHAPER") == "1":
-        if arabic_reshaper is not None and get_display is not None:
-            return get_display(arabic_reshaper.reshape(text))
+    has_arabic = any("\u0600" <= char <= "\u06ff" or "\ufb50" <= char <= "\ufeff" for char in text)
+    if (
+        has_arabic
+        and os.environ.get("MANIM_USE_ARABIC_RESHAPER") != "0"
+        and arabic_reshaper is not None
+        and get_display is not None
+    ):
+        reshaped = arabic_reshaper.reshape(text)
+        if os.environ.get("MANIM_USE_ARABIC_BIDI") == "1":
+            return get_display(reshaped)
+        return reshaped
     return text
 
 

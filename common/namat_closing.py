@@ -8,7 +8,8 @@ from dataclasses import dataclass
 import numpy as np
 from manim import *
 
-from .manim_helpers import fit_to_frame, make_ar_text, make_latin_text
+from .arabic_text_helper import get_arabic_text
+from .manim_helpers import fit_to_frame, make_latin_text
 
 
 BACKGROUND = "#0B1020"
@@ -234,35 +235,35 @@ class NamatClosingBuilder:
         emblem = VGroup(halo, ring, connectors, nodes, nucleus)
         return emblem
 
-    def create_brand_texts(self) -> tuple[VGroup, Text, Text, Line]:
+    def create_brand_texts(self) -> tuple[Mobject, Mobject, Mobject, Line]:
         text_scale = max(self.layout.scale, 0.78)
         brand_max_width = self.layout.width * (0.82 if self.layout.is_vertical else 0.72)
         slogan_max_width = self.layout.width * (0.84 if self.layout.is_vertical else 0.76)
         cta_max_width = self.layout.width * (0.72 if self.layout.is_vertical else 0.64)
 
-        brand = make_ar_text(
-            f"\u200e{BRAND_NAME}\u200e",
-            font_size=(48 if self.layout.is_vertical else 50) * text_scale,
+        brand = get_arabic_text(
+            BRAND_NAME,
+            size=(48 if self.layout.is_vertical else 50) * text_scale,
             color=PRIMARY,
-            weight="BOLD",
-            max_width=brand_max_width,
         )
+        fit_to_frame(brand, max_width=brand_max_width)
+        brand.set_stroke(PRIMARY, width=0.25, opacity=0.30)
         brand.move_to([0, self.layout.brand_y, 0])
 
-        slogan = make_ar_text(
+        slogan = get_arabic_text(
             SLOGAN,
-            font_size=(27 if self.layout.is_vertical else 29) * text_scale,
+            size=(27 if self.layout.is_vertical else 29) * text_scale,
             color=PRIMARY,
-            max_width=slogan_max_width,
         )
+        fit_to_frame(slogan, max_width=slogan_max_width)
         slogan.next_to(brand, DOWN, buff=(0.22 if self.layout.is_vertical else 0.24) * text_scale)
 
-        cta = make_ar_text(
+        cta = get_arabic_text(
             CTA,
-            font_size=(19 if self.layout.is_vertical else 20) * text_scale,
+            size=(19 if self.layout.is_vertical else 20) * text_scale,
             color=SECONDARY,
-            max_width=cta_max_width,
         )
+        fit_to_frame(cta, max_width=cta_max_width)
         cta.move_to([0, self.layout.cta_y, 0])
         cta.set_opacity(0.78)
 
