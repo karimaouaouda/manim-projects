@@ -8,6 +8,7 @@ from functools import lru_cache
 from typing import Iterable
 
 from manim import *
+import manimpango
 
 try:
     import arabic_reshaper
@@ -34,10 +35,22 @@ def _installed_fonts() -> set[str]:
         return set(manimpango.list_fonts())
     except Exception:
         return set()
+    
+
+def load_fonts(path: str) -> None:
+    """Load all fonts from the given path into Manim/Pango."""
+    fonts = _installed_fonts()
+    for file in os.listdir(path):
+        if file.lower().endswith((".ttf", ".otf")):
+            font_name = os.path.splitext(file)[0]
+            if font_name not in fonts:
+                manimpango.register_font(os.path.join(path, file))
 
 
 def pick_font(candidates: Iterable[str], fallback: str = "Arial") -> str:
     """Return the first installed font from candidates, otherwise fallback."""
+
+    load_fonts("assets/fonts")
 
     fonts = _installed_fonts()
     for font in candidates:
@@ -47,7 +60,7 @@ def pick_font(candidates: Iterable[str], fallback: str = "Arial") -> str:
 
 
 ARABIC_FONT = pick_font(
-    ("Cairo", "Noto Kufi Arabic", "Noto Naskh Arabic", "Arial"),
+    ("Noto Kufi Arabic", "Noto Naskh Arabic", "Amiri", "Arial", "DejaVu Sans"),
 )
 LATIN_FONT = pick_font(("Montserrat", "Inter", "Poppins", "Arial", "DejaVu Sans"))
 
