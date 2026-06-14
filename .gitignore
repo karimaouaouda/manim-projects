@@ -6,3 +6,11 @@ old_md
 
 # ignore projects/assets folder
 /projects/assets
+__pycache__
+__pycache__/*
+/assets/videos
+*.mp4
+
+*/__pycache__/
+*.pyc
+projects/__pycache__/*
